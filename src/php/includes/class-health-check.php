@@ -336,9 +336,17 @@ class Health_Check {
 			wp_register_script( 'clipboard', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/javascript/clipboard.min.js', array(), '2.0.4' );
 		}
 
+		if ( ! wp_script_is( 'react', 'registered' ) ) {
+			wp_register_script( 'react', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/javascript/react.js', array() );
+		}
+
+		if ( ! wp_script_is( 'react-dom', 'registered' ) ) {
+			wp_register_script( 'react-dom', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/javascript/react-dom.js', array() );
+		}
+
 		wp_enqueue_style( 'health-check', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/css/health-check.css', array(), HEALTH_CHECK_PLUGIN_VERSION );
 
-		wp_enqueue_script( 'health-check', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/javascript/health-check.js', array( 'jquery', 'wp-a11y', 'clipboard', 'wp-util' ), HEALTH_CHECK_PLUGIN_VERSION, true );
+		wp_enqueue_script( 'health-check', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/javascript/health-check.js', array( 'jquery', 'wp-a11y', 'clipboard', 'wp-util', 'react', 'react-dom' ), HEALTH_CHECK_PLUGIN_VERSION, true );
 
 		wp_localize_script( 'health-check', 'SiteHealth', $health_check_js_variables );
 	}

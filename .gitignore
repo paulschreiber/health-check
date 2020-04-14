@@ -4,7 +4,7 @@ node_modules/
 wordpress-coding-standards
 php-codesniffer
 build/
-health-check/
+/health-check/
 vendor/
 
 .wp-env.override.json

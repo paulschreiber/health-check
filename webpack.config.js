@@ -11,8 +11,11 @@ module.exports = {
 		"clipboard": "clipboard",
 		"react": "react",
 		"react-dom": "react-dom",
+		"wp-i18n": "@wordpress/i18n",
+		"wp-data": "@wordpress/data",
+		"wp-api-fetch": "@wordpress/api-fetch",
 		"health-check": [ path.resolve( process.cwd(), 'src/javascript', 'health-check.js' ), path.resolve( process.cwd(), 'src/sass', 'health-check.scss' ) ],
-		"troubleshooting-mode": path.resolve( process.cwd(), 'src/javascript', 'troubleshooting-mode.js' ),
+		"troubleshooting-mode": path.resolve( process.cwd(), 'src/javascript/troubleshooting-mode', 'index.js' ),
 	},
 	output: {
 		filename: '[name].js',
@@ -47,8 +50,8 @@ module.exports = {
 		}),
 	],
 	externals: {
+		...defaultConfig.externals,
 		react: 'React',
 		'react-dom': 'ReactDOM',
-		'__' : '@wordpress/i18n'
 	}
 };
