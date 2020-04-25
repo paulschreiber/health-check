@@ -21,6 +21,13 @@ const actions = {
 			path,
 		};
 	},
+
+	clearNotices() {
+		const path = '/wp-json/health-check/troubleshooting-mode/v1/clear-notices';
+		const notices = this.fetchFromAPI( path );
+
+		this.setNotices( notices );
+	},
 };
 
 registerStore(
@@ -42,13 +49,13 @@ registerStore(
 		selectors: {
 			getNotices( state ) {
 				return state.notices;
-			}
+			},
 		},
 
 		controls: {
 			FETCH_FROM_API( action ) {
 				return apiFetch( { path: action.path } );
-			}
+			},
 		},
 
 		resolvers: {
@@ -57,7 +64,7 @@ registerStore(
 				const notices = yield actions.fetchFromAPI( path );
 
 				return actions.setNotices( notices );
-			}
+			},
 		}
 	}
 );

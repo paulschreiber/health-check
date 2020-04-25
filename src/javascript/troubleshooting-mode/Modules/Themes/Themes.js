@@ -1,11 +1,10 @@
 import React from 'react';
 import { useSelect } from "@wordpress/data";
 import Theme from "./Theme";
+import ThemesData from "../../Data/ThemesData";
 
 function Themes() {
-	const themes = useSelect ( ( select ) => {
-		return select( 'site-health-themes' ).getThemes();
-	} );
+	const themes = ThemesData();
 
 	if ( 0 === Object.keys( themes ).length ) {
 		return (

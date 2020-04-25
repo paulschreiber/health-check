@@ -14,19 +14,16 @@ import Plugins from "./Modules/Plugins";
 import { useSelect } from "@wordpress/data";
 import Themes from "./Modules/Themes";
 import Notices from "./Modules/Notices";
+import PluginsData from "./Data/PluginsData";
+import ThemesData from "./Data/ThemesData";
+import NoticesData from "./Data/NoticesData";
 
 function TroubleshootingMode() {
-	const plugins = useSelect( ( select ) => {
-		return select( 'site-health-plugins' ).getPlugins();
-	} );
+	const plugins = PluginsData();
 
-	const themes = useSelect( ( select ) => {
-		return select( 'site-health-themes' ).getThemes();
-	} );
+	const themes = ThemesData();
 
-	const notices = useSelect( ( select ) => {
-		return select( 'site-health-notices' ).getNotices();
-	} );
+	const notices = NoticesData();
 
 	return (
 		<>

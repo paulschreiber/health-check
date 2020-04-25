@@ -42,6 +42,18 @@ class Healt_Check_WP_REST_API {
 				}
 			)
 		);
+
+		register_rest_route(
+			'health-check/troubleshooting-mode/v1',
+			'/clear-notices',
+			array(
+				'method'              => 'GET',
+				'callback'            => array( $this, 'clear_notices' ),
+				'permission_callback' => function() {
+					return current_user_can( 'view_site_health_checks' );
+				}
+			)
+		);
 	}
 
 	public function get_plugins() {
@@ -64,7 +76,20 @@ class Healt_Check_WP_REST_API {
 				'slug'     => $plugin_slug,
 				'label'    => $plugin_data['Name'],
 				'enabled'  => in_array( $plugin_slug, $mu_plugin->get_allowed_plugins(), true ),
-				'toggling' => false,
+				'urls'     => array(
+					'enable'  => add_query_arg(
+						array(
+							'health-check-troubleshooting-enable-plugin' => $plugin_slug,
+						),
+						admin_url()
+					),
+					'disable' => add_query_arg(
+						array(
+							'health-check-troubleshooting-disable-plugin' => $plugin_slug,
+						),
+						admin_url()
+					),
+				)
 			);
 		}
 
@@ -84,7 +109,14 @@ class Healt_Check_WP_REST_API {
 				'slug'     => $theme['id'],
 				'label'    => $theme['name'],
 				'enabled'  => $theme['active'],
-				'toggling' => false,
+				'urls'     => array(
+					'enable'  => add_query_arg(
+						array(
+							'health-check-change-active-theme' => $theme['id']
+						),
+						admin_url()
+					),
+				)
 			);
 		}
 
@@ -94,8 +126,6 @@ class Healt_Check_WP_REST_API {
 	public function get_notices() {
 		return get_option( 'health-check-dashboard-notices', array() );
 	}
-
-
 }
 
 new Healt_Check_WP_REST_API();

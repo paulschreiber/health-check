@@ -1,11 +1,10 @@
 import React from 'react';
 import { useSelect } from "@wordpress/data";
 import Plugin from "./Plugin";
+import PluginsData from "../../Data/PluginsData";
 
 function Plugins() {
-	const plugins = useSelect ( ( select ) => {
-		return select( 'site-health-plugins' ).getPlugins();
-	} );
+	const plugins = PluginsData();
 
 	if ( 0 === Object.keys( plugins ).length ) {
 		return (

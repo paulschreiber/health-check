@@ -2,11 +2,10 @@ import React from 'react';
 import { useSelect } from "@wordpress/data";
 import Notice from "./Notice";
 import { __ } from "@wordpress/i18n";
+import NoticesData from "../../Data/NoticesData";
 
 function Notices() {
-	const notices = useSelect ( ( select ) => {
-		return select( 'site-health-notices' ).getNotices();
-	} );
+	const notices = NoticesData();
 
 	if ( ! notices.length ) {
 		return (
@@ -35,9 +34,12 @@ function Notices() {
 
 			<div
 				className="dismiss-notices">
-				<button>
+				<a
+					href="?health-check-dismiss-notices=true"
+					className="button button-secondary"
+				>
 					{ __( 'Dismiss notices', 'health-check' ) }
-				</button>
+				</a>
 			</div>
 		</>
 	)
