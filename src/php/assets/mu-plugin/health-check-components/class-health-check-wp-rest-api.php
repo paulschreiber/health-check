@@ -33,6 +33,18 @@ class Healt_Check_WP_REST_API {
 
 		register_rest_route(
 			'health-check/troubleshooting-mode/v1',
+			'/set-theme',
+			array(
+				'method'              => 'POST',
+				'callback'            => array( $this, 'set_theme' ),
+				'permission_callback' => function() {
+					return current_user_can( 'view_site_health_checks' );
+				}
+			)
+		);
+
+		register_rest_route(
+			'health-check/troubleshooting-mode/v1',
 			'/get-notices',
 			array(
 				'method'              => 'GET',
@@ -96,6 +108,14 @@ class Healt_Check_WP_REST_API {
 		return $plugins;
 	}
 
+	public function set_theme( WP_REST_Request $request ) {
+		$new_theme = $request->get_param( 'theme' );
+
+		update_option( 'health-check-current-theme', $new_theme );
+
+		return $this->get_themes();
+	}
+
 	public function get_themes() {
 		// Ensure the theme functions are available to us on every page.
 		include_once( trailingslashit( ABSPATH ) . 'wp-admin/includes/theme.php' );
@@ -125,6 +145,12 @@ class Healt_Check_WP_REST_API {
 
 	public function get_notices() {
 		return get_option( 'health-check-dashboard-notices', array() );
+	}
+
+	public function clear_notices() {
+		update_option( 'health-check-dashboard-notices', array() );
+
+		return array();
 	}
 }
 

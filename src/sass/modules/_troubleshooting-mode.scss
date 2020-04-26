@@ -54,6 +54,21 @@
 			text-align: right;
 			margin-right: 1rem;
 		}
+
+		&.clearing {
+
+			.notice {
+
+				opacity: 0.65;
+			}
+
+			.dismiss-notices {
+
+				pointer-events: none;
+				opacity: 0.65;
+			}
+
+		}
 	}
 
 	.disable-troubleshooting-mode {

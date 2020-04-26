@@ -255,6 +255,7 @@ class Health_Check {
 				'site_status'                 => wp_create_nonce( 'health-check-site-status' ),
 				'site_status_result'          => wp_create_nonce( 'health-check-site-status-result' ),
 				'tools_plugin_compat'         => wp_create_nonce( 'health-check-tools-plugin-compat' ),
+				'api_nonce'                   => wp_create_nonce( 'wp_rest' )
 			),
 			'site_status' => array(
 				'direct' => array(),
@@ -475,6 +476,10 @@ class Health_Check {
 	 * @return void
 	 */
 	public function dashboard_page() {
+
+//		echo '<div id="site-health"></div>';
+//		return;
+
 		include_once( HEALTH_CHECK_PLUGIN_DIRECTORY . '/pages/site-health-header.php' );
 
 		switch ( Health_Check::current_tab() ) {

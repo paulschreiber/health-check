@@ -1,8 +1,6 @@
 import { registerStore } from '@wordpress/data';
 import apiFetch from "@wordpress/api-fetch";
 
-apiFetch.use( apiFetch.createNonceMiddleware( HealthCheckTS.api_nonce ) );
-
 const SiteHealth_TroubleshootingMode_DefaultState_Themes = {
 	themes: [],
 };
@@ -40,10 +38,6 @@ registerStore(
 		actions,
 
 		selectors: {
-			getTheme( state, item ) {
-				return state.themes[ item ];
-			},
-
 			getThemes( state ) {
 				return state.themes;
 			}

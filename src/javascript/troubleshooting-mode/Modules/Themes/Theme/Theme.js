@@ -1,5 +1,6 @@
 import React from 'react';
 import { __, sprintf } from "@wordpress/i18n";
+import EnableTheme from "./Actions/Enable";
 
 function Theme( { theme } ) {
 	return (
@@ -9,10 +10,11 @@ function Theme( { theme } ) {
 			&nbsp; &mdash; &nbsp;
 
 			{ ! theme.enabled
-				? <a
-					href={ theme.urls.enable }
+				? <button
+					className="button-link"
 					aria-label={ sprintf( __( 'Switch the active theme to %s', 'health-check' ), theme.label ) }
-				>{ __( 'Switch to this theme', 'health-check' ) }</a>
+					onClick={ () => EnableTheme( theme ) }
+				>{ __( 'Switch to this theme', 'health-check' ) }</button>
 				: <>{ __( 'Active theme', 'health-check' ) }</>
 			}
 		</li>

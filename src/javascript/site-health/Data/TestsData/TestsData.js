@@ -1,10 +1,10 @@
 import React from 'react';
 import { useSelect } from "@wordpress/data";
 
-function ThemesData() {
+function TestsData() {
 	return useSelect ( ( select ) => {
-		return select( 'site-health-themes' ).getThemes();
+		return select( 'site-health-tests' ).getTests();
 	} );
 }
 
-export default ThemesData;
+export default TestsData;

@@ -1,10 +1,9 @@
 import { registerStore } from '@wordpress/data';
 import apiFetch from "@wordpress/api-fetch";
 
-apiFetch.use( apiFetch.createNonceMiddleware( HealthCheckTS.api_nonce ) );
-
 const SiteHealth_TroubleshootingMode_DefaultState_Notices = {
 	notices: [],
+	isClearing: false,
 };
 
 const actions = {
@@ -22,12 +21,12 @@ const actions = {
 		};
 	},
 
-	clearNotices() {
-		const path = '/wp-json/health-check/troubleshooting-mode/v1/clear-notices';
-		const notices = this.fetchFromAPI( path );
-
-		this.setNotices( notices );
-	},
+	setClearing( clearing ) {
+		return {
+			type: 'SET_CLEARING',
+			clearing,
+		};
+	}
 };
 
 registerStore(
@@ -39,6 +38,12 @@ registerStore(
 						...state,
 						notices: action.notices
 					};
+
+				case 'SET_CLEARING':
+					return {
+						...state,
+						isClearing: action.clearing
+					};
 			}
 
 			return state;
@@ -49,6 +54,10 @@ registerStore(
 		selectors: {
 			getNotices( state ) {
 				return state.notices;
+			},
+
+			isClearing( state ) {
+				return state.isClearing;
 			},
 		},
 

@@ -1,7 +1,6 @@
 import React from 'react';
-import { useSelect } from "@wordpress/data";
 import Theme from "./Theme";
-import ThemesData from "../../Data/ThemesData";
+import ThemesData from "../../Data/Themes";
 
 function Themes() {
 	const themes = ThemesData();

@@ -1,8 +1,6 @@
 import { registerStore } from '@wordpress/data';
 import apiFetch from '@wordpress/api-fetch';
 
-apiFetch.use( apiFetch.createNonceMiddleware( HealthCheckTS.api_nonce ) );
-
 const SiteHealth_TroubleshootingMode_DefaultState_Plugins = {
 	plugins: {},
 };

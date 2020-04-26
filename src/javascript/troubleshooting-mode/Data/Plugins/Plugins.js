@@ -1,10 +1,9 @@
-import React from 'react';
 import { useSelect } from "@wordpress/data";
 
-function PluginsData() {
+function Plugins() {
 	return useSelect ( ( select ) => {
 		return select( 'site-health-plugins' ).getPlugins();
 	} );
 }
 
-export default PluginsData;
+export default Plugins;

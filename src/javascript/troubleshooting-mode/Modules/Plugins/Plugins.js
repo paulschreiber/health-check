@@ -1,7 +1,6 @@
 import React from 'react';
-import { useSelect } from "@wordpress/data";
 import Plugin from "./Plugin";
-import PluginsData from "../../Data/PluginsData";
+import PluginsData from "../../Data/Plugins";
 
 function Plugins() {
 	const plugins = PluginsData();

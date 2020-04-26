@@ -1,22 +1,24 @@
 import React from 'react';
 import Column from "./Modules/Column";
 import Title from "./Modules/Title";
-import Accordion from "./Modules/Accordion";
-import AccordionSection from "./Modules/Accordion/AccordionSection";
+import Accordion from "../Components/Accordion";
+import AccordionSection from "../Components/Accordion/AccordionSection";
 import { __ } from "@wordpress/i18n";
+import apiFetch from "@wordpress/api-fetch";
+
+apiFetch.use( apiFetch.createNonceMiddleware( HealthCheckTS.api_nonce ) );
 
 import "./Stores/Plugins";
 import "./Stores/Themes";
 import "./Stores/Notices";
 
 import Plugins from "./Modules/Plugins";
-
-import { useSelect } from "@wordpress/data";
 import Themes from "./Modules/Themes";
 import Notices from "./Modules/Notices";
-import PluginsData from "./Data/PluginsData";
-import ThemesData from "./Data/ThemesData";
-import NoticesData from "./Data/NoticesData";
+
+import PluginsData from "./Data/Plugins";
+import ThemesData from "./Data/Themes";
+import NoticesData from "./Data/Notices";
 
 function TroubleshootingMode() {
 	const plugins = PluginsData();
@@ -71,7 +73,7 @@ function TroubleshootingMode() {
 
 					<AccordionSection
 						id="notices"
-						label={ "Notices (" + notices.length + ")" }
+						label={ "Notices (" + Object.keys( notices ).length + ")" }
 						isExpanded="true"
 					>
 
