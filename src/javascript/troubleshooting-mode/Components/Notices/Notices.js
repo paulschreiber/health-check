@@ -23,7 +23,9 @@ function Notices() {
 		<>
 			<ul
 				role="list"
-				id={ "health-check-notices " + ( isClearing ? 'clearing' : '' ) }>
+				id="health-check-notices"
+				className={ ( isClearing ? 'clearing' : '' ) }
+			>
 
 				{ notices.map( ( notice, index ) => (
 					<Notice

@@ -11,8 +11,48 @@ class Healt_Check_WP_REST_API {
 			'health-check/troubleshooting-mode/v1',
 			'/get-plugins',
 			array(
-				'method'              => 'GET',
+				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_plugins' ),
+				'permission_callback' => function() {
+					return current_user_can( 'view_site_health_checks' );
+				}
+			)
+		);
+
+		register_rest_route(
+			'health-check/troubleshooting-mode/v1',
+			'/enable-plugin',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'enable_plugin' ),
+				'args'                => array(
+					'plugin' => array(
+						'required'          => true,
+						'validate_callback' => function( $param, $request, $key ) {
+							return is_string( $param );
+						}
+					)
+				),
+				'permission_callback' => function() {
+					return current_user_can( 'view_site_health_checks' );
+				}
+			)
+		);
+
+		register_rest_route(
+			'health-check/troubleshooting-mode/v1',
+			'/disable-plugin',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'disable_plugin' ),
+				'args'                => array(
+					'plugin' => array(
+						'required'          => true,
+						'validate_callback' => function( $param, $request, $key ) {
+							return is_string( $param );
+						}
+					)
+				),
 				'permission_callback' => function() {
 					return current_user_can( 'view_site_health_checks' );
 				}
@@ -23,7 +63,7 @@ class Healt_Check_WP_REST_API {
 			'health-check/troubleshooting-mode/v1',
 			'/get-themes',
 			array(
-				'method'              => 'GET',
+				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_themes' ),
 				'permission_callback' => function() {
 					return current_user_can( 'view_site_health_checks' );
@@ -35,8 +75,16 @@ class Healt_Check_WP_REST_API {
 			'health-check/troubleshooting-mode/v1',
 			'/set-theme',
 			array(
-				'method'              => 'POST',
+				'methods'             => 'POST',
 				'callback'            => array( $this, 'set_theme' ),
+				'args'                => array(
+					'theme' => array(
+						'required'          => true,
+						'validate_callback' => function( $param, $request, $key ) {
+							return is_string( $param );
+						}
+					)
+				),
 				'permission_callback' => function() {
 					return current_user_can( 'view_site_health_checks' );
 				}
@@ -47,7 +95,7 @@ class Healt_Check_WP_REST_API {
 			'health-check/troubleshooting-mode/v1',
 			'/get-notices',
 			array(
-				'method'              => 'GET',
+				'methods'             => 'GET',
 				'callback'            => array( $this, 'get_notices' ),
 				'permission_callback' => function() {
 					return current_user_can( 'view_site_health_checks' );
@@ -59,13 +107,21 @@ class Healt_Check_WP_REST_API {
 			'health-check/troubleshooting-mode/v1',
 			'/clear-notices',
 			array(
-				'method'              => 'GET',
+				'methods'             => 'GET',
 				'callback'            => array( $this, 'clear_notices' ),
 				'permission_callback' => function() {
 					return current_user_can( 'view_site_health_checks' );
 				}
 			)
 		);
+	}
+
+	public function enable_plugin( WP_REST_Request $request ) {
+		$enable_plugin = $request->get_param( 'plugin' );
+
+
+
+		return $this->get_plugins();
 	}
 
 	public function get_plugins() {
@@ -113,7 +169,17 @@ class Healt_Check_WP_REST_API {
 
 		update_option( 'health-check-current-theme', $new_theme );
 
-		return $this->get_themes();
+		$themes = $this->get_themes();
+
+		foreach ( $themes as $theme => $data ) {
+			if ( $theme === $new_theme ) {
+				$themes[ $theme ]['enabled'] = true;
+			} else {
+				$themes[ $theme ]['enabled'] = false;
+			}
+		}
+
+		return $themes;
 	}
 
 	public function get_themes() {
@@ -139,6 +205,8 @@ class Healt_Check_WP_REST_API {
 				)
 			);
 		}
+
+		ksort( $themes );
 
 		return $themes;
 	}

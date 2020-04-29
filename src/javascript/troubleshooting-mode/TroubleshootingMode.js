@@ -1,6 +1,6 @@
 import React from 'react';
-import Column from "./Modules/Column";
-import Title from "./Modules/Title";
+import Column from "./Components/Column";
+import Title from "./Components/Title";
 import Accordion from "../Components/Accordion";
 import AccordionSection from "../Components/Accordion/AccordionSection";
 import { __ } from "@wordpress/i18n";
@@ -12,9 +12,9 @@ import "./Stores/Plugins";
 import "./Stores/Themes";
 import "./Stores/Notices";
 
-import Plugins from "./Modules/Plugins";
-import Themes from "./Modules/Themes";
-import Notices from "./Modules/Notices";
+import Plugins from "./Components/Plugins";
+import Themes from "./Components/Themes";
+import Notices from "./Components/Notices";
 
 import PluginsData from "./Data/Plugins";
 import ThemesData from "./Data/Themes";
