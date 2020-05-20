@@ -16,20 +16,27 @@ function Plugins() {
 	}
 
 	return (
-		<ul
-			role="list"
-			id="health-check-plugins">
+		<>
+			<ul
+				role="list"
+				id="health-check-plugins">
 
-			{ Object.keys( plugins ).map( ( slug, index )  => {
-				return (
-					<Plugin
-						key={ slug }
-						plugin={ plugins[ slug ] }
-					/>
-				);
-			} ) }
+				{ Object.keys( plugins ).map( ( slug, index )  => {
+					return (
+						<Plugin
+							key={ slug }
+							plugin={ plugins[ slug ] }
+						/>
+					);
+				} ) }
 
-		</ul>
+			</ul>
+
+			{ Object.keys( plugins ).length >= 1 &&
+				<p>You can also perform bulk-management from the <a href={ HealthCheckTS.urls.plugins }>plugins</a> screen</p>
+			}
+
+		</>
 	)
 }
 
