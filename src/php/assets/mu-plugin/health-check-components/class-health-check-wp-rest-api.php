@@ -1,8 +1,12 @@
 <?php
 
-class Healt_Check_WP_REST_API {
+class Health_Check_WP_REST_API {
 
 	public function __construct() {
+		if ( ! Health_Check_Troubleshooting_MU::get_instance()->is_troubleshooting() ) {
+			return;
+		}
+
 		add_action( 'rest_api_init', array( $this, 'register_rest_route' ) );
 	}
 
@@ -130,11 +134,9 @@ class Healt_Check_WP_REST_API {
 			require_once( trailingslashit( ABSPATH ) . 'wp-admin/includes/plugin.php' );
 		}
 
-		$mu_plugin = Health_Check_Troubleshooting_MU::get_instance();
-
 		$plugins = array();
 
-		foreach ( $mu_plugin->get_active_plugins() as $single_plugin ) {
+		foreach ( Health_Check_Plugins::get_instance()->get_active_plugins() as $single_plugin ) {
 			$plugin_slug = explode( '/', $single_plugin );
 			$plugin_slug = $plugin_slug[0];
 
@@ -143,7 +145,7 @@ class Healt_Check_WP_REST_API {
 			$plugins[ $plugin_slug ] = array(
 				'slug'     => $plugin_slug,
 				'label'    => $plugin_data['Name'],
-				'enabled'  => in_array( $plugin_slug, $mu_plugin->get_allowed_plugins(), true ),
+				'enabled'  => in_array( $plugin_slug, Health_Check_Plugins::get_instance()->get_allowed_plugins(), true ),
 				'urls'     => array(
 					'enable'  => add_query_arg(
 						array(
@@ -167,7 +169,7 @@ class Healt_Check_WP_REST_API {
 	public function set_theme( WP_REST_Request $request ) {
 		$new_theme = $request->get_param( 'theme' );
 
-		update_option( 'health-check-current-theme', $new_theme );
+		Health_Check_Theme::get_instance()->set_active_theme( $new_theme );
 
 		$themes = $this->get_themes();
 
@@ -212,14 +214,14 @@ class Healt_Check_WP_REST_API {
 	}
 
 	public function get_notices() {
-		return get_option( 'health-check-dashboard-notices', array() );
+		return Health_Check_Notices::get();
 	}
 
 	public function clear_notices() {
-		update_option( 'health-check-dashboard-notices', array() );
+		Health_Check_Notices::clear();
 
 		return array();
 	}
 }
 
-new Healt_Check_WP_REST_API();
+new Health_Check_WP_REST_API();

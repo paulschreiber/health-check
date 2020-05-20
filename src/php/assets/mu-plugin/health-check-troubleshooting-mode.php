@@ -2,7 +2,7 @@
 /*
 	Plugin Name: Health Check Troubleshooting Mode
 	Description: Conditionally disabled themes or plugins on your site for a given session, used to rule out conflicts during troubleshooting.
-	Version: 1.7.1
+	Version: 1.8.0-beta1
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -13,17 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_VERSION', '1.7.1' );
 
 // Set the base path for the Health Check MU plugin directory.
-define( 'HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY', ABSPATH . PLUGINDIR . '/health-check/assets/mu-plugin/' );
+define( 'HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY', trailingslashit( __DIR__ ) );
 
 class Health_Check_Troubleshooting_MU {
 	private $disable_hash    = null;
-	private $override_active = true;
-	private $default_theme   = true;
-	private $active_plugins  = array();
-	private $allowed_plugins = array();
-	private $current_theme;
-	private $current_theme_details;
-	private $self_fetching_theme = false;
 
 	private static $instance = null;
 
@@ -36,26 +29,6 @@ class Health_Check_Troubleshooting_MU {
 		'health-check-troubleshoot-disable-plugin',
 	);
 
-	private $default_themes = array(
-		'twentytwenty',
-		'twentynineteen',
-		'twentyseventeen',
-		'twentysixteen',
-		'twentyfifteen',
-		'twentyfourteen',
-		'twentythirteen',
-		'twentytwelve',
-		'twentyeleven',
-		'twentyten',
-	);
-
-	/**
-	 * Health_Check_Troubleshooting_MU constructor.
-	 */
-	public function __construct() {
-		$this->init();
-	}
-
 	public static function get_instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new Health_Check_Troubleshooting_MU();
@@ -65,26 +38,22 @@ class Health_Check_Troubleshooting_MU {
 	}
 
 	/**
+	 * Health_Check_Troubleshooting_MU constructor.
+	 */
+	public function __construct() {
+		$this->init();
+	}
+
+	/**
 	 * Actually initiation of the plugin.
 	 *
 	 * @return void
 	 */
 	public function init() {
-		add_action( 'admin_bar_menu', array( $this, 'health_check_troubleshoot_menu_bar' ), 999 );
-
-		add_filter( 'option_active_plugins', array( $this, 'health_check_loopback_test_disable_plugins' ) );
-		add_filter( 'option_active_sitewide_plugins', array( $this, 'health_check_loopback_test_disable_plugins' ) );
-
-		add_filter( 'pre_option_template', array( $this, 'health_check_troubleshoot_theme_template' ) );
-		add_filter( 'pre_option_stylesheet', array( $this, 'health_check_troubleshoot_theme_stylesheet' ) );
-
 		add_filter( 'wp_fatal_error_handler_enabled', array( $this, 'wp_fatal_error_handler_enabled' ) );
 
 		add_filter( 'bulk_actions-plugins', array( $this, 'remove_plugin_bulk_actions' ) );
 		add_filter( 'handle_bulk_actions-plugins', array( $this, 'handle_plugin_bulk_actions' ), 10, 3 );
-
-		add_action( 'admin_notices', array( $this, 'prompt_install_default_theme' ) );
-		add_filter( 'user_has_cap', array( $this, 'remove_plugin_theme_install' ) );
 
 		add_action( 'plugin_action_links', array( $this, 'plugin_actions' ), 50, 4 );
 
@@ -113,10 +82,26 @@ class Health_Check_Troubleshooting_MU {
 	 */
 	public function load_options() {
 		$this->disable_hash    = get_option( 'health-check-disable-plugin-hash', null );
-		$this->allowed_plugins = get_option( 'health-check-allowed-plugins', array() );
-		$this->default_theme   = ( 'yes' === get_option( 'health-check-default-theme', 'yes' ) ? true : false );
-		$this->active_plugins  = $this->get_unfiltered_plugin_list();
-		$this->current_theme   = get_option( 'health-check-current-theme', false );
+	}
+
+	/**
+	 * Fire on plugin activation.
+	 *
+	 * When in Troubleshooting Mode, plugin activations
+	 * will clear out the DB entry for `active_plugins`, this is bad.
+	 *
+	 * We fix this by re-setting the DB entry if anything tries
+	 * to modify it during troubleshooting.
+	 *
+	 * @return void
+	 */
+	public function plugin_activated() {
+		if ( ! Health_Check_Troubleshooting_MU::get_instance()->is_troubleshooting() ) {
+			return;
+		}
+
+		// Force the database entry for active plugins if someone tried changing plugins while in Troubleshooting Mode.
+		update_option( 'active_plugins', $this->active_plugins );
 	}
 
 	/**
@@ -159,6 +144,9 @@ class Health_Check_Troubleshooting_MU {
 
 		wp_localize_script( 'health-check-ts-mode', 'HealthCheckTS', array(
 			'api_nonce' => wp_create_nonce( 'wp_rest' ),
+			'urls' => array(
+				'plugins' => get_admin_url( null, 'plugins.php' ),
+			),
 		) );
 	}
 
@@ -178,84 +166,6 @@ class Health_Check_Troubleshooting_MU {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Add a prompt to install a default theme.
-	 *
-	 * If no default theme exists, we can't reliably assert if an issue is
-	 * caused by the theme. In these cases we should provide an easy step
-	 * to get to, and install, one of the default themes.
-	 *
-	 * @return void
-	 */
-	public function prompt_install_default_theme() {
-		if ( ! $this->is_troubleshooting() || $this->has_default_theme() ) {
-			return;
-		}
-
-		printf(
-			'<div class="notice notice-warning dismissable"><p>%s</p><p><a href="%s" class="button button-primary">%s</a></p></div>',
-			esc_html__( 'You don\'t have any of the default themes installed. A default theme helps you determine if your current theme is causing conflicts.', 'health-check' ),
-			esc_url(
-				admin_url(
-					sprintf(
-						'theme-install.php?theme=%s',
-						$this->default_themes[0]
-					)
-				)
-			),
-			esc_html__( 'Install a default theme', 'health-check' )
-		);
-	}
-
-	/**
-	 * Remove the `Add` option for plugins and themes.
-	 *
-	 * When troubleshooting, adding or changing themes and plugins can
-	 * lead to unexpected results. Remove these menu items to make it less
-	 * likely that a user breaks their site through these.
-	 *
-	 * @param  array $caps Array containing the current users capabilities.
-	 *
-	 * @return array
-	 */
-	public function remove_plugin_theme_install( $caps ) {
-		if ( ! $this->is_troubleshooting() ) {
-			return $caps;
-		}
-
-		$caps['switch_themes'] = false;
-
-		/*
-		 * This is to early for `get_current_screen()`, so we have to do it the
-		 * old fashioned way with `$_SERVER`.
-		 */
-		if ( 'plugin-install.php' === substr( $_SERVER['REQUEST_URI'], -18 ) ) {
-			$caps['activate_plugins'] = false;
-		}
-
-		return $caps;
-	}
-
-	/**
-	 * Fire on plugin activation.
-	 *
-	 * When in Troubleshooting Mode, plugin activations
-	 * will clear out the DB entry for `active_plugins`, this is bad.
-	 *
-	 * We fix this by re-setting the DB entry if anything tries
-	 * to modify it during troubleshooting.
-	 *
-	 * @return void
-	 */
-	public function plugin_activated() {
-		if ( ! $this->is_troubleshooting() ) {
-			return;
-		}
-
-		// Force the database entry for active plugins if someone tried changing plugins while in Troubleshooting Mode.
-		update_option( 'active_plugins', $this->active_plugins );
 	}
 
 	public function handle_plugin_bulk_actions( $sendback, $action, $plugins ) {
@@ -432,22 +342,6 @@ class Health_Check_Troubleshooting_MU {
 		return $actions;
 	}
 
-	/**
-	 * Get the actual list of active plugins.
-	 *
-	 * When in Troubleshooting Mode we override the list of plugins,
-	 * this function lets us grab the active plugins list without
-	 * any interference.
-	 *
-	 * @return array Array of active plugins.
-	 */
-	public function get_unfiltered_plugin_list() {
-		$this->override_active = false;
-		$all_plugins           = get_option( 'active_plugins' );
-		$this->override_active = true;
-
-		return $all_plugins;
-	}
 
 	/**
 	 * Check if the user is currently in Troubleshooting Mode or not.
@@ -477,155 +371,9 @@ class Health_Check_Troubleshooting_MU {
 		return true;
 	}
 
-	/**
-	 * Filter the plugins that are activated in WordPress.
-	 *
-	 * @param array $plugins An array of plugins marked as active.
-	 *
-	 * @return array
-	 */
-	function health_check_loopback_test_disable_plugins( $plugins ) {
-		if ( ! $this->is_troubleshooting() || ! $this->override_active ) {
-			return $plugins;
-		}
 
-		// If we've received a comma-separated list of allowed plugins, we'll add them to the array of allowed plugins.
-		if ( isset( $_GET['health-check-allowed-plugins'] ) ) {
-			$this->allowed_plugins = explode( ',', $_GET['health-check-allowed-plugins'] );
-		}
 
-		foreach ( $plugins as $plugin_no => $plugin_path ) {
-			// Split up the plugin path, [0] is the slug and [1] holds the primary plugin file.
-			$plugin_parts = explode( '/', $plugin_path );
 
-			// We may want to allow individual, or groups of plugins, so introduce a skip-mechanic for those scenarios.
-			if ( in_array( $plugin_parts[0], $this->allowed_plugins, true ) ) {
-				continue;
-			}
-
-			// Remove the reference to this plugin.
-			unset( $plugins[ $plugin_no ] );
-		}
-
-		// Return a possibly modified list of activated plugins.
-		return $plugins;
-	}
-
-	/**
-	 * Check if a default theme exists.
-	 *
-	 * If a default theme exists, return the most recent one, if not return `false`.
-	 *
-	 * @return bool|string
-	 */
-	function has_default_theme() {
-		foreach ( $this->default_themes as $default_theme ) {
-			if ( $this->theme_exists( $default_theme ) ) {
-				return $default_theme;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if a theme exists by looking for the slug.
-	 *
-	 * @param string $theme_slug
-	 *
-	 * @return bool
-	 */
-	function theme_exists( $theme_slug ) {
-		return is_dir( WP_CONTENT_DIR . '/themes/' . $theme_slug );
-	}
-
-	/**
-	 * Check if theme overrides are active.
-	 *
-	 * @return bool
-	 */
-	function override_theme() {
-		if ( ! $this->is_troubleshooting() ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Override the default theme.
-	 *
-	 * Attempt to set one of the default themes, or a theme of the users choosing, as the active one
-	 * during Troubleshooting Mode.
-	 *
-	 * @param $default
-	 *
-	 * @return bool|string
-	 */
-	function health_check_troubleshoot_theme_stylesheet( $default ) {
-		if ( $this->self_fetching_theme ) {
-			return $default;
-		}
-
-		if ( ! $this->override_theme() ) {
-			return $default;
-		}
-
-		if ( empty( $this->current_theme_details ) ) {
-			$this->self_fetching_theme   = true;
-			$this->current_theme_details = wp_get_theme( $this->current_theme );
-			$this->self_fetching_theme   = false;
-		}
-
-		// If no theme has been chosen, start off by troubleshooting as a default theme if one exists.
-		$default_theme = $this->has_default_theme();
-		if ( false === $this->current_theme ) {
-			if ( $default_theme ) {
-				return $default_theme;
-			}
-		}
-
-		return $this->current_theme;
-	}
-
-	/**
-	 * Override the default parent theme.
-	 *
-	 * If this is a child theme, override the parent and provide our users chosen themes parent instead.
-	 *
-	 * @param $default
-	 *
-	 * @return bool|string
-	 */
-	function health_check_troubleshoot_theme_template( $default ) {
-		if ( $this->self_fetching_theme ) {
-			return $default;
-		}
-
-		if ( ! $this->override_theme() ) {
-			return $default;
-		}
-
-		if ( empty( $this->current_theme_details ) ) {
-			$this->self_fetching_theme   = true;
-			$this->current_theme_details = wp_get_theme( $this->current_theme );
-			$this->self_fetching_theme   = false;
-		}
-
-		// If no theme has been chosen, start off by troubleshooting as a default theme if one exists.
-		$default_theme = $this->has_default_theme();
-		if ( false === $this->current_theme ) {
-			if ( $default_theme ) {
-				return $default_theme;
-			}
-		}
-
-		if ( $this->current_theme_details->parent() ) {
-			return $this->current_theme_details->get_template();
-		}
-
-		return $this->current_theme;
-	}
 
 	/**
 	 * Disable Troubleshooting Mode on logout.
@@ -761,196 +509,6 @@ class Health_Check_Troubleshooting_MU {
 		}
 	}
 
-	private function add_dashboard_notice( $message, $severity = 'notice' ) {
-		$notices = get_option( 'health-check-dashboard-notices', array() );
-
-		$notices[] = array(
-			'severity' => $severity,
-			'message'  => $message,
-			'time'     => gmdate( 'Y-m-d H:i' ),
-		);
-
-		update_option( 'health-check-dashboard-notices', $notices );
-	}
-
-	public function get_active_plugins() {
-		return $this->active_plugins;
-	}
-
-	public function get_allowed_plugins() {
-		return $this->allowed_plugins;
-	}
-
-	/**
-	 * Extend the admin bar.
-	 *
-	 * When in Troubleshooting Mode, introduce a new element to the admin bar to show
-	 * enabled and disabled plugins (if conditions are met), switch between themes
-	 * and disable Troubleshooting Mode altogether.
-	 *
-	 * @param WP_Admin_Bar $wp_menu
-	 *
-	 * @return void
-	 */
-	function health_check_troubleshoot_menu_bar( $wp_menu ) {
-		if ( ! $this->is_troubleshooting() ) {
-			return;
-		}
-
-		// We need some admin functions to make this a better user experience, so include that file.
-		if ( ! is_admin() ) {
-			require_once( trailingslashit( ABSPATH ) . 'wp-admin/includes/plugin.php' );
-		}
-
-		// Ensure the theme functions are available to us on every page.
-		include_once( trailingslashit( ABSPATH ) . 'wp-admin/includes/theme.php' );
-
-		// Add top-level menu item.
-		$wp_menu->add_menu(
-			array(
-				'id'    => 'health-check',
-				'title' => esc_html__( 'Troubleshooting Mode', 'health-check' ),
-				'href'  => admin_url( '/' ),
-			)
-		);
-
-		// Add a link to manage plugins if there are more than 20 set to be active.
-		if ( count( $this->active_plugins ) > 20 ) {
-			$wp_menu->add_node(
-				array(
-					'id'     => 'health-check-plugins',
-					'title'  => esc_html__( 'Manage active plugins', 'health-check' ),
-					'parent' => 'health-check',
-					'href'   => admin_url( 'plugins.php' ),
-				)
-			);
-		} else {
-			$wp_menu->add_node(
-				array(
-					'id'     => 'health-check-plugins',
-					'title'  => esc_html__( 'Plugins', 'health-check' ),
-					'parent' => 'health-check',
-					'href'   => admin_url( 'plugins.php' ),
-				)
-			);
-
-			$wp_menu->add_group(
-				array(
-					'id'     => 'health-check-plugins-enabled',
-					'parent' => 'health-check-plugins',
-				)
-			);
-			$wp_menu->add_group(
-				array(
-					'id'     => 'health-check-plugins-disabled',
-					'parent' => 'health-check-plugins',
-				)
-			);
-
-			foreach ( $this->active_plugins as $single_plugin ) {
-				$plugin_slug = explode( '/', $single_plugin );
-				$plugin_slug = $plugin_slug[0];
-
-				$plugin_data = get_plugin_data( trailingslashit( WP_PLUGIN_DIR ) . $single_plugin );
-
-				$enabled = true;
-
-				if ( in_array( $plugin_slug, $this->allowed_plugins, true ) ) {
-					$label = sprintf(
-						// Translators: %s: Plugin slug.
-						esc_html__( 'Disable %s', 'health-check' ),
-						sprintf(
-							'<strong>%s</strong>',
-							$plugin_data['Name']
-						)
-					);
-					$url = add_query_arg(
-						array(
-							'health-check-troubleshoot-disable-plugin' => $plugin_slug,
-						)
-					);
-				} else {
-					$enabled = false;
-					$label   = sprintf(
-						// Translators: %s: Plugin slug.
-						esc_html__( 'Enable %s', 'health-check' ),
-						sprintf(
-							'<strong>%s</strong>',
-							$plugin_data['Name']
-						)
-					);
-					$url = add_query_arg(
-						array(
-							'health-check-troubleshoot-enable-plugin' => $plugin_slug,
-						)
-					);
-				}
-
-				$wp_menu->add_node(
-					array(
-						'id'     => sprintf(
-							'health-check-plugin-%s',
-							$plugin_slug
-						),
-						'title'  => $label,
-						'parent' => ( $enabled ? 'health-check-plugins-enabled' : 'health-check-plugins-disabled' ),
-						'href'   => $url,
-					)
-				);
-			}
-		}
-
-		$wp_menu->add_node(
-			array(
-				'id'     => 'health-check-theme',
-				'title'  => esc_html__( 'Themes', 'health-check' ),
-				'parent' => 'health-check',
-				'href'   => admin_url( 'themes.php' ),
-			)
-		);
-
-		$themes = wp_prepare_themes_for_js();
-
-		foreach ( $themes as $theme ) {
-			$node = array(
-				'id'     => sprintf(
-					'health-check-theme-%s',
-					sanitize_title( $theme['id'] )
-				),
-				'title'  => sprintf(
-					'%s %s',
-					( $theme['active'] ? esc_html_x( 'Active:', 'Prefix for the active theme in troubleshooting mode', 'health-check' ) : esc_html_x( 'Switch to', 'Prefix for inactive themes in troubleshooting mode', 'health-check' ) ),
-					$theme['name']
-				),
-				'parent' => 'health-check-theme',
-			);
-
-			if ( ! $theme['active'] ) {
-				$node['href'] = add_query_arg(
-					array(
-						'health-check-change-active-theme' => $theme['id'],
-					)
-				);
-			}
-
-			$wp_menu->add_node( $node );
-		}
-
-		// Add a link to disable Troubleshooting Mode.
-		$wp_menu->add_node(
-			array(
-				'id'     => 'health-check-disable',
-				'title'  => esc_html__( 'Disable Troubleshooting Mode', 'health-check' ),
-				'parent' => 'health-check',
-				'href'   => add_query_arg(
-					array(
-						'health-check-disable-troubleshooting' => true,
-					)
-				),
-			)
-		);
-	}
-
 	public function test_site_state() {
 
 		// Make sure the Health_Check_Loopback class is available to us, in case the primary plugin is disabled.
@@ -989,6 +547,10 @@ class Health_Check_Troubleshooting_MU {
 
 }
 
-Health_Check_Troubleshooting_MU::get_instance();
-
 include_once( HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY . 'health-check-components/class-health-check-wp-rest-api.php' );
+include_once( HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY . 'health-check-components/class-health-check-notices.php' );
+include_once( HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY . 'health-check-components/class-health-check-plugins.php' );
+include_once( HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY . 'health-check-components/class-health-check-theme.php' );
+include_once( HEALTH_CHECK_TROUBLESHOOTING_MODE_PLUGIN_DIRECTORY . 'health-check-components/class-health-check-admin-bar-menu.php' );
+
+Health_Check_Troubleshooting_MU::get_instance();
