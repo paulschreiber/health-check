@@ -50,7 +50,7 @@ class Health_Check_Troubleshoot {
 	 * @return bool
 	 */
 	static function mu_plugin_exists() {
-		return file_exists( WPMU_PLUGIN_DIR . '/health-check-troubleshooting-mode.php' );
+		return is_link( trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-troubleshooting-mode.php' );
 	}
 
 	/**
@@ -61,7 +61,17 @@ class Health_Check_Troubleshoot {
 	 * @return bool
 	 */
 	static function old_mu_plugin_exists() {
-		return file_exists( WPMU_PLUGIN_DIR . '/health-check-disable-plugins.php' );
+		$old_file_exists = false;
+
+		if ( file_exists( WPMU_PLUGIN_DIR . '/health-check-troubleshooting-mode.php' ) ) {
+			$old_file_exists = true;
+		}
+
+		if ( file_exists( WPMU_PLUGIN_DIR . '/health-check-disable-plugins.php' ) ) {
+			$old_file_exists = true;
+		}
+
+		return $old_file_exists;
 	}
 
 	/**
@@ -92,17 +102,22 @@ class Health_Check_Troubleshoot {
 			}
 		}
 
-		// Remove instances of the old plugin, to avoid collisions.
+		// Remove instances of the older plugins, to avoid collisions.
 		if ( Health_Check_Troubleshoot::old_mu_plugin_exists() ) {
-			if ( ! $wp_filesystem->delete( trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-disable-plugins.php' ) ) {
-				Health_Check::display_notice( esc_html__( 'We could not remove the old must-use plugin.', 'health-check' ), 'error' );
-				return false;
+			if ( file_exists( trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-disable-plugins.php' ) ) {
+				wp_delete_file( trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-disable-plugins.php' );
+			}
+
+			if ( file_exists( trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-troubleshooting-mode.php' ) ) {
+				wp_delete_file( trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-troubleshooting-mode.php' );
 			}
 		}
 
-		// Copy the must-use plugin to the local directory.
-		if ( ! $wp_filesystem->copy( trailingslashit( HEALTH_CHECK_PLUGIN_DIRECTORY ) . 'assets/mu-plugin/health-check-troubleshooting-mode.php', trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-troubleshooting-mode.php' ) ) {
-			Health_Check::display_notice( esc_html__( 'We were unable to copy the plugin file required to enable the Troubleshooting Mode.', 'health-check' ), 'error' );
+		// Symlink the must-use plugin.
+		$file_path = trailingslashit( HEALTH_CHECK_PLUGIN_DIRECTORY ) . 'assets/mu-plugin/health-check-troubleshooting-mode.php';
+		$link_location = trailingslashit( WPMU_PLUGIN_DIR ) . 'health-check-troubleshooting-mode.php';
+		if ( ! symlink( $file_path, $link_location ) ) {
+			Health_Check::display_notice( esc_html__( 'We were unable to link the plugin file required to enable the Troubleshooting Mode.', 'health-check' ), 'error' );
 			return false;
 		}
 
@@ -213,18 +228,7 @@ class Health_Check_Troubleshoot {
 	 */
 	static function show_enable_troubleshoot_form() {
 		if ( isset( $_POST['health-check-troubleshoot-mode'] ) ) {
-			if ( Health_Check_Troubleshoot::mu_plugin_exists() ) {
-				if ( ! Health_Check_Troubleshoot::maybe_update_must_use_plugin() ) {
-					return;
-				}
-				Health_Check_Troubleshoot::session_started();
-			} else {
-				if ( ! Health_Check::get_filesystem_credentials() ) {
-					return;
-				} else {
-					Health_Check_Troubleshoot::setup_must_use_plugin();
-				}
-			}
+			Health_Check_Troubleshoot::setup_must_use_plugin();
 		}
 
 		?>

@@ -135,26 +135,15 @@ class Health_Check_Loopback {
 
 		ob_start();
 
-		$needs_creds = false;
+		$symlink_created = true;
 
 		if ( ! Health_Check_Troubleshoot::mu_plugin_exists() ) {
-			if ( ! Health_Check::get_filesystem_credentials() ) {
-				$needs_creds = true;
-			} else {
-				$check_output = Health_Check_Troubleshoot::setup_must_use_plugin();
-				if ( false === $check_output ) {
-					$needs_creds = true;
-				}
-			}
-		} else {
-			if ( ! Health_Check_Troubleshoot::maybe_update_must_use_plugin() ) {
-				$needs_creds = true;
-			}
+			$symlink_created = Health_Check_Troubleshoot::setup_must_use_plugin();
 		}
 
 		$result = ob_get_clean();
 
-		if ( $needs_creds ) {
+		if ( ! $symlink_created ) {
 			wp_send_json_error( $result );
 			die();
 		}

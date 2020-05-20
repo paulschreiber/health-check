@@ -149,26 +149,15 @@ class Health_Check {
 
 		ob_start();
 
-		$needs_credentials = false;
+		$symlink_created = true;
 
 		if ( ! Health_Check_Troubleshoot::mu_plugin_exists() ) {
-			if ( ! Health_Check::get_filesystem_credentials() ) {
-				$needs_credentials = true;
-			} else {
-				$check_output = Health_Check_Troubleshoot::setup_must_use_plugin( false );
-				if ( false === $check_output ) {
-					$needs_credentials = true;
-				}
-			}
-		} else {
-			if ( ! Health_Check_Troubleshoot::maybe_update_must_use_plugin() ) {
-				$needs_credentials = true;
-			}
+			$symlink_created = Health_Check_Troubleshoot::setup_must_use_plugin( false );
 		}
 
 		$result = ob_get_clean();
 
-		if ( $needs_credentials ) {
+		if ( ! $symlink_created ) {
 			$this->admin_notices[] = (object) array(
 				'message' => $result,
 				'type'    => 'warning',
