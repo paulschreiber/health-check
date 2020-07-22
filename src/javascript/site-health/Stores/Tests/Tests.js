@@ -36,6 +36,13 @@ const actions = {
 		};
 	},
 
+	setAPIResponse( response ) {
+		return {
+			type: 'SET_API_RESPONSE',
+			response,
+		}
+	},
+
 	fetchFromAPI( path ) {
 		return {
 			type: 'FETCH_FROM_API',
@@ -67,6 +74,13 @@ registerStore(
 					return {
 						...state,
 						results: currentResults
+					};
+
+				case 'SET_API_RESPONSE':
+					return {
+						...state,
+						tests: action.response.tests,
+						results: action.response.results
 					};
 			}
 
@@ -102,9 +116,9 @@ registerStore(
 		resolvers: {
 			* getTests() {
 				const path = '/wp-json/health-check/site-health/v1/get-tests';
-				const tests = yield actions.fetchFromAPI( path );
+				const response = yield actions.fetchFromAPI( path );
 
-				return actions.setTests( tests );
+				return actions.setAPIResponse( response );
 			}
 		}
 	}

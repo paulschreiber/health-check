@@ -45,6 +45,15 @@ class Health_Check_Rest_API {
 
 		$tests = $health_check->get_tests();
 
+		$response = array(
+			'tests'   => $tests['async'],
+			'results' => array(
+				'good'        => array(),
+				'recommended' => array(),
+				'critical'    => array(),
+			),
+		);
+
 		// Pre-populate the test results for direct tests.
 		foreach ( $tests['direct'] as $slug => $test ) {
 			if ( is_string( $test['test'] ) ) {
@@ -76,16 +85,21 @@ class Health_Check_Rest_API {
 					 * }
 					 */
 					$tests['direct'][ $slug ] = apply_filters( 'site_status_test_result', call_user_func( array( $health_check, $test_function ) ) );
+
+					$response['results'][ $tests['direct'][ $slug ]['status'] ][ $slug ] = $tests['direct'][ $slug ];
+
 					continue;
 				}
 			}
 
 			if ( is_callable( $test['test'] ) ) {
 				$tests['direct'][ $slug ] = apply_filters( 'site_status_test_result', call_user_func( $test['test'] ) );
+
+				$response['results'][ $tests['direct'][ $slug ]['status'] ][ $slug ] = $tests['direct'][ $slug ];
 			}
 		}
 
-		return $tests;
+		return $response;
 	}
 
 	public function run_test( WP_REST_Request $request ) {

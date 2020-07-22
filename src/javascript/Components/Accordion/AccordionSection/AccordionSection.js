@@ -1,6 +1,6 @@
 import React from 'react';
 
-function AccordionSection( { id, label, isExpanded = false, children } ) {
+function AccordionSection( { id, label, isExpanded = false, badge = null, children } ) {
 	return (
 		<>
 			<dt
@@ -18,6 +18,15 @@ function AccordionSection( { id, label, isExpanded = false, children } ) {
 						className="title">
 						{ label }
 					</span>
+
+					{ null !== badge &&
+						<>
+							<span className={ "badge " + badge.color }>
+								{ badge.label }
+							</span>
+						</>
+					}
+
 					<span className="icon"/>
 				</button>
 			</dt>

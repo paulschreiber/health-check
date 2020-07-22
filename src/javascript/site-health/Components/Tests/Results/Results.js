@@ -8,14 +8,15 @@ function Results( { title, tests } ) {
 			<h2>{ title }</h2>
 
 			<Accordion>
-				{ Object.keys( tests ).map( ( test ) => (
+				{ Object.keys( tests ).map( ( slug ) => (
 					<AccordionSection
-						id={ test.test }
+						key={ slug }
+						id={ tests[ slug ].test }
 						isExpanded={ false }
-						badge={ test.badge }
-						label={ test.label }
+						badge={ tests[ slug ].badge ? tests[ slug ].badge : null }
+						label={ tests[ slug ].label }
 						>
-						{ test.description }
+						{ tests[ slug ].description }
 					</AccordionSection>
 				) ) }
 			</Accordion>

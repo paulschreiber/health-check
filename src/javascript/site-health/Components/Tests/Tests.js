@@ -6,7 +6,7 @@ import TestResultsData from "../../Data/TestResultsData";
 import AllClear from "./AllClear";
 import Description from "./Description";
 import Results from "./Results";
-import {__, sprintf} from "@wordpress/i18n";
+import { __, sprintf } from "@wordpress/i18n";
 
 function Tests() {
 	const tests = TestsData();
@@ -18,25 +18,25 @@ function Tests() {
 		<>
 			<Description/>
 
-			{ ( Object.keys( recommendedResults ).length < 1 && Object.keys( criticalResults ) < 1 ) &&
+			{ ( Object.keys( recommendedResults ).length < 1 && Object.keys( criticalResults ).length < 1 ) &&
 				<AllClear/>
 			}
 
-			{ criticalResults.length >= 1 &&
+			{ Object.keys( criticalResults ).length >= 1 &&
 				<Results
-					title={ sprintf( __( '%d critical issues', 'health-check' ), criticalResults.length ) }
+					title={ sprintf( __( '%d critical issues', 'health-check' ), Object.keys( criticalResults ).length ) }
 					tests={ criticalResults }
 				/>
 			}
 
-			{ recommendedResults.length >= 1 &&
+			{ Object.keys( recommendedResults ).length >= 1 &&
 				<Results
-					title={ sprintf( __( '%d recommended improvements', 'health-check' ), recommendedResults.length ) }
+					title={ sprintf( __( '%d recommended improvements', 'health-check' ), Object.keys( recommendedResults ).length ) }
 					tests={ recommendedResults }
 				/>
 			}
 
-			{ goodResults.length >= 1 &&
+			{ Object.keys( goodResults ).length >= 1 &&
 				<>
 					<div className="site-health-view-more">
 						<button
@@ -52,7 +52,7 @@ function Tests() {
 
 					<div className="site-health-issues-wrapper hidden" id="health-check-issues-good">
 						<Results
-							title={ sprintf( __( '%d items with no issues detected', 'health-check' ), goodResults.length ) }
+							title={ sprintf( __( '%d items with no issues detected', 'health-check' ), Object.keys( goodResults ).length ) }
 							tests={ goodResults }
 						/>
 					</div>
