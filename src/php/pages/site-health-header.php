@@ -10,7 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( 'We\'re sorry, but you can not directly access this file.' );
 }
 ?>
-
 <div class="health-check-header">
 	<div class="health-check-title-section">
 		<h1>

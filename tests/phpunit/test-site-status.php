@@ -7,7 +7,7 @@ class Health_Check_Site_Status_Test extends WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		$this->tests_list = Health_Check_Site_Status::get_tests();
+		$this->tests_list = Health_Check_Site_Status::get_instance()->get_tests();
 	}
 
 	private function runStatusTest( $func ) {

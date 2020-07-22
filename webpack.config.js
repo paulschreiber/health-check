@@ -14,7 +14,7 @@ module.exports = {
 		"wp-i18n": "@wordpress/i18n",
 		"wp-data": "@wordpress/data",
 		"wp-api-fetch": "@wordpress/api-fetch",
-		"health-check": [ path.resolve( process.cwd(), 'src/javascript', 'health-check.js' ), path.resolve( process.cwd(), 'src/sass', 'health-check.scss' ) ],
+		"health-check": [ path.resolve( process.cwd(), 'src/javascript/site-health', 'index.js' ), path.resolve( process.cwd(), 'src/sass', 'health-check.scss' ) ],
 		"troubleshooting-mode": path.resolve( process.cwd(), 'src/javascript/troubleshooting-mode', 'index.js' ),
 	},
 	output: {

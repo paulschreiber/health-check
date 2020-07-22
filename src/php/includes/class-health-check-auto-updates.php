@@ -283,6 +283,10 @@ class Health_Check_Auto_Updates {
 	 * @return array The test results.
 	 */
 	function test_check_wp_filesystem_method() {
+		if ( ! function_exists( 'request_filesystem_credentials' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/file.php';
+		}
+
 		$skin    = new Automatic_Upgrader_Skin;
 		$success = $skin->request_filesystem_credentials( false, ABSPATH );
 
@@ -312,6 +316,10 @@ class Health_Check_Auto_Updates {
 	 * @return array|bool The test results. false if they're not writeable.
 	 */
 	function test_all_files_writable() {
+		if ( ! function_exists( 'get_core_checksums' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/update.php';
+		}
+
 		global $wp_filesystem;
 
 		include ABSPATH . WPINC . '/version.php'; // $wp_version; // x.y.z

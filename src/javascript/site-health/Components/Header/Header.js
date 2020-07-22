@@ -7,7 +7,9 @@ function Header() {
 	return (
 		<>
 			<div className="health-check-header">
-				<h1>{ __( 'Site Health', 'health-check' ) }</h1>
+				<div className={ "health-check-title-section" }>
+					<h1>{ __( 'Site Health', 'health-check' ) }</h1>
+				</div>
 
 				<ScoreIndicator/>
 

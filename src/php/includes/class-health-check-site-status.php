@@ -14,6 +14,16 @@ class Health_Check_Site_Status {
 	private $health_check_mysql_required_version = '5.5';
 	private $health_check_mysql_rec_version      = '';
 
+	private static $instance = null;
+
+	public static function get_instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new Health_Check_Site_Status();
+		}
+
+		return self::$instance;
+	}
+
 	public function __construct() {
 		$this->init();
 	}
@@ -127,6 +137,10 @@ class Health_Check_Site_Status {
 	 * @return array The test result.
 	 */
 	public function get_test_wordpress_version() {
+		if ( ! function_exists( 'get_core_updates' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/update.php';
+		}
+
 		$result = array(
 			'label'       => '',
 			'status'      => '',
@@ -267,6 +281,13 @@ class Health_Check_Site_Status {
 	 * @return array The test result.
 	 */
 	public function get_test_plugin_version() {
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/plugin.php';
+		}
+		if ( ! function_exists( 'get_plugin_updates' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/update.php';
+		}
+
 		$result = array(
 			'label'       => __( 'Your plugins are up to date', 'health-check' ),
 			'status'      => 'good',
@@ -402,6 +423,10 @@ class Health_Check_Site_Status {
 	 * @return array The test results.
 	 */
 	public function get_test_theme_version() {
+		if ( ! function_exists( 'get_theme_updates' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/update.php';
+		}
+
 		$result = array(
 			'label'       => __( 'Your themes are up to date', 'health-check' ),
 			'status'      => 'good',
@@ -634,6 +659,9 @@ class Health_Check_Site_Status {
 	 * @return array The test results.
 	 */
 	public function get_test_php_version() {
+		if ( ! function_exists( 'wp_check_php_version' ) ) {
+			require_once trailingslashit( ABSPATH ) . 'wp-admin/includes/misc.php';
+		}
 		$response = wp_check_php_version();
 
 		$result = array(
@@ -1875,62 +1903,60 @@ class Health_Check_Site_Status {
 	 *
 	 * @return array The list of tests to run.
 	 */
-	public static function get_tests() {
-		global $health_check_site_status;
-
+	public function get_tests() {
 		$tests = array(
 			'direct' => array(
 				'wordpress_version' => array(
 					'label' => __( 'WordPress Version', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_wordpress_version' ),
+					'test'  => array( $this, 'get_test_wordpress_version' ),
 				),
 				'plugin_version'    => array(
 					'label' => __( 'Plugin Versions', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_plugin_version' ),
+					'test'  => array( $this, 'get_test_plugin_version' ),
 				),
 				'theme_version'     => array(
 					'label' => __( 'Theme Versions', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_theme_version' ),
+					'test'  => array( $this, 'get_test_theme_version' ),
 				),
 				'php_version'       => array(
 					'label' => __( 'PHP Version', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_php_version' ),
+					'test'  => array( $this, 'get_test_php_version' ),
 				),
 				'sql_server'        => array(
 					'label' => __( 'Database Server version', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_sql_server' ),
+					'test'  => array( $this, 'get_test_sql_server' ),
 				),
 				'php_extensions'    => array(
 					'label' => __( 'PHP Extensions', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_php_extensions' ),
+					'test'  => array( $this, 'get_test_php_extensions' ),
 				),
 				'utf8mb4_support'   => array(
 					'label' => __( 'MySQL utf8mb4 support', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_utf8mb4_support' ),
+					'test'  => array( $this, 'get_test_utf8mb4_support' ),
 				),
 				'https_status'      => array(
 					'label' => __( 'HTTPS status', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_https_status' ),
+					'test'  => array( $this, 'get_test_https_status' ),
 				),
 				'ssl_support'       => array(
 					'label' => __( 'Secure communication', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_ssl_support' ),
+					'test'  => array( $this, 'get_test_ssl_support' ),
 				),
 				'scheduled_events'  => array(
 					'label' => __( 'Scheduled events', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_scheduled_events' ),
+					'test'  => array( $this, 'get_test_scheduled_events' ),
 				),
 				'http_requests'     => array(
 					'label' => __( 'HTTP Requests', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_http_requests' ),
+					'test'  => array( $this, 'get_test_http_requests' ),
 				),
 				'debug_enabled'     => array(
 					'label' => __( 'Debugging enabled', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_is_in_debug_mode' ),
+					'test'  => array( $this, 'get_test_is_in_debug_mode' ),
 				),
 				'timezones'         => array(
 					'label' => __( 'Timezone', 'health-check' ),
-					'test'  => array( $health_check_site_status, 'get_test_timezone_not_utc' ),
+					'test'  => array( $this, 'get_test_timezone_not_utc' ),
 				),
 			),
 			'async'  => array(
@@ -1953,8 +1979,13 @@ class Health_Check_Site_Status {
 		if ( function_exists( 'rest_url' ) ) {
 			$tests['direct']['rest_availability'] = array(
 				'label' => __( 'REST API availability', 'health-check' ),
-				'test'  => array( $health_check_site_status, 'get_test_rest_availability' ),
+				'test'  => array( $this, 'get_test_rest_availability' ),
 			);
+		}
+
+		// Don't run https test on localhost
+		if ( 'localhost' === preg_replace( '|https?://|', '', get_site_url() ) ) {
+			unset( $tests['direct']['https_status'] );
 		}
 
 		/**
@@ -1996,7 +2027,7 @@ class Health_Check_Site_Status {
 		// Bootstrap wp-admin, as WP_Cron doesn't do this for us.
 		require_once( trailingslashit( ABSPATH ) . 'wp-admin/includes/admin.php' );
 
-		$bulk_tests = Health_Check_Site_Status::get_tests();
+		$bulk_tests = $this->get_tests();
 
 		$results = array();
 
@@ -2035,5 +2066,4 @@ class Health_Check_Site_Status {
 	}
 }
 
-global $health_check_site_status;
-$health_check_site_status = new Health_Check_Site_Status();
+Health_Check_Site_Status::get_instance();

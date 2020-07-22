@@ -265,63 +265,6 @@ class Health_Check {
 			$health_check_js_variables['site_status']['issues'] = $issue_counts;
 		}
 
-		if ( 'dashboard' !== $screen->base && ( ! isset( $_GET['tab'] ) || ( isset( $_GET['tab'] ) && 'site-status' === $_GET['tab'] ) ) ) {
-			$tests = Health_Check_Site_Status::get_tests();
-
-			// Don't run https test on localhost
-			if ( 'localhost' === preg_replace( '|https?://|', '', get_site_url() ) ) {
-				unset( $tests['direct']['https_status'] );
-			}
-
-			foreach ( $tests['direct'] as $test ) {
-				if ( is_string( $test['test'] ) ) {
-					$test_function = sprintf(
-						'get_test_%s',
-						$test['test']
-					);
-
-					if ( method_exists( $this, $test_function ) && is_callable( array( $this, $test_function ) ) ) {
-						/**
-						 * Filter the output of a finished Site Health test.
-						 *
-						 * @since 5.3.0
-						 *
-						 * @param array $test_result {
-						 *     An associated array of test result data.
-						 *
-						 *     @param string $label  A label describing the test, and is used as a header in the output.
-						 *     @param string $status The status of the test, which can be a value of `good`, `recommended` or `critical`.
-						 *     @param array  $badge {
-						 *         Tests are put into categories which have an associated badge shown, these can be modified and assigned here.
-						 *
-						 *         @param string $label The test label, for example `Performance`.
-						 *         @param string $color Default `blue`. A string representing a color to use for the label.
-						 *     }
-						 *     @param string $description A more descriptive explanation of what the test looks for, and why it is important for the end user.
-						 *     @param string $actions     An action to direct the user to where they can resolve the issue, if one exists.
-						 *     @param string $test        The name of the test being ran, used as a reference point.
-						 * }
-						 */
-						$health_check_js_variables['site_status']['direct'][] = apply_filters( 'site_status_test_result', call_user_func( array( $this, $test_function ) ) );
-						continue;
-					}
-				}
-
-				if ( is_callable( $test['test'] ) ) {
-					$health_check_js_variables['site_status']['direct'][] = apply_filters( 'site_status_test_result', call_user_func( $test['test'] ) );
-				}
-			}
-
-			foreach ( $tests['async'] as $test ) {
-				if ( is_string( $test['test'] ) ) {
-					$health_check_js_variables['site_status']['async'][] = array(
-						'test'      => $test['test'],
-						'completed' => false,
-					);
-				}
-			}
-		}
-
 		if ( ! wp_script_is( 'clipboard', 'registered' ) ) {
 			wp_register_script( 'clipboard', trailingslashit( HEALTH_CHECK_PLUGIN_URL ) . 'assets/javascript/clipboard.min.js', array(), '2.0.4' );
 		}
@@ -466,8 +409,8 @@ class Health_Check {
 	 */
 	public function dashboard_page() {
 
-//		echo '<div id="site-health"></div>';
-//		return;
+		echo '<div id="site-health"></div>';
+		return;
 
 		include_once( HEALTH_CHECK_PLUGIN_DIRECTORY . '/pages/site-health-header.php' );
 

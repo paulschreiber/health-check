@@ -5,13 +5,34 @@ apiFetch.use( apiFetch.createNonceMiddleware( SiteHealth.nonce.api_nonce ) );
 
 const SiteHealth_DefaultState_Tests = {
 	tests: [],
+	isLoading: true,
+	results: {
+		good: [],
+		recommended: [],
+		critical: [],
+	},
 };
 
 const actions = {
+	setLoading( loading ) {
+		return {
+			type: 'SET_LOADING',
+			loading
+		};
+	},
+
 	setTests( tests ) {
 		return {
 			type: 'SET_TESTS',
 			tests,
+		};
+	},
+
+	setTestResult( test, result ) {
+		return {
+			type: 'SET_TEST_RESULT',
+			test,
+			result,
 		};
 	},
 
@@ -27,10 +48,25 @@ registerStore(
 	'site-health-tests', {
 		reducer( state = SiteHealth_DefaultState_Tests, action ) {
 			switch ( action.type ) {
+				case 'SET_LOADING':
+					return {
+						...state,
+						isLoading: action.loading
+					};
+
 				case 'SET_TESTS':
 					return {
 						...state,
 						tests: action.tests
+					};
+
+				case 'SET_TEST_RESULT':
+					let results = state.results;
+					results[ action.result ][ action.test.name ] = action.test;
+
+					return {
+						...state,
+						results: currentResults
 					};
 			}
 
@@ -44,8 +80,16 @@ registerStore(
 				return state.tests[ item ];
 			},
 
+			getResults( state, type ) {
+				return state.results[ type ];
+			},
+
 			getTests( state ) {
 				return state.tests;
+			},
+
+			isLoading( state ) {
+				return state.isLoading;
 			}
 		},
 
@@ -57,7 +101,7 @@ registerStore(
 
 		resolvers: {
 			* getTests() {
-				const path = '/wp-json/health-check/v1/get-tests';
+				const path = '/wp-json/health-check/site-health/v1/get-tests';
 				const tests = yield actions.fetchFromAPI( path );
 
 				return actions.setTests( tests );
