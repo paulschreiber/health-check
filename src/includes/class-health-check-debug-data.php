@@ -231,6 +231,13 @@ class Health_Check_Debug_Data {
 			$wp_local_dev_debug = 'undefined';
 		}
 
+		// Check WP_ENVIRONMENT_TYPE.
+		if ( defined( 'WP_ENVIRONMENT_TYPE' ) ) {
+			$wp_environment_type = WP_ENVIRONMENT_TYPE;
+		} else {
+			$wp_environment_type = 'undefined';
+		}
+
 		$info['wp-constants'] = array(
 			'label'       => __( 'WordPress Constants', 'health-check' ),
 			'description' => __( 'These settings alter where and how parts of WordPress are loaded.', 'health-check' ),
@@ -306,6 +313,10 @@ class Health_Check_Debug_Data {
 					'label' => 'WP_LOCAL_DEV',
 					'value' => $wp_local_dev,
 					'debug' => $wp_local_dev_debug,
+				),
+				'WP_ENVIRONMENT_TYPE' => array(
+					'label' => 'WP_ENVIRONMENT_TYPE',
+					'value' => $wp_environment_type,
 				),
 			),
 		);
